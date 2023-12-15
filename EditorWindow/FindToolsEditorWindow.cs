@@ -12,10 +12,13 @@ namespace FindTools
         private static FindToolType[] _findToolTypes;
         public FindToolType currentFindToolType;
         private int _selectedOption = 0;
+        private bool _useFindGeneric;
+        private static FindToolGeneric findToolGeneric;
         [MenuItem("Tools/FindWindow")]
         public static void ShowWindow()
         {
             GetWindow(typeof(FindToolsEditorWindow), false, "Find tool window");
+            findToolGeneric = new FindToolGeneric();
             GetFindToolTypes();
         }
         private static void GetFindToolTypes()
@@ -35,6 +38,15 @@ namespace FindTools
         }
         private void OnGUI()
         {
+            _useFindGeneric = GUILayout.Toggle(_useFindGeneric, "Use generic find");
+            EditorGUILayout.Separator();
+            if (_useFindGeneric)
+            {
+                FindToolsUtility.ShowWarnig("Using generic find may take more time depending on project size.");
+                EditorGUILayout.Separator();
+                findToolGeneric.ShowUI();
+                return;
+            }
             ShowFindToolTypes();
             if (currentFindToolType == null)
                 return;
@@ -44,11 +56,18 @@ namespace FindTools
         private void ShowFindToolTypes()
         {
             GUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField("Select objecto to find:");
-            string[] options = new string[_findToolTypes.Length];
-            for (int i = 0; i < _findToolTypes.Length; i++)
-                options[i] = _findToolTypes[i].GetFindToolName();
-            _selectedOption = EditorGUILayout.Popup(_selectedOption, options);
+            EditorGUILayout.LabelField("Select object to find:");
+            try
+            {
+                string[] options = new string[_findToolTypes.Length];
+                for (int i = 0; i < _findToolTypes.Length; i++)
+                    options[i] = _findToolTypes[i].GetFindToolName();
+                _selectedOption = EditorGUILayout.Popup(_selectedOption, options);
+            }
+            catch
+            {
+                Close();
+            }
             currentFindToolType = _findToolTypes[_selectedOption];
             GUILayout.EndHorizontal();
         }

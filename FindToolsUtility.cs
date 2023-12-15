@@ -1,7 +1,9 @@
 using System.Collections.Generic;
+using System.IO;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using System.Text.RegularExpressions;
 namespace FindTools
 {
     public static class FindToolsUtility
@@ -89,6 +91,9 @@ namespace FindTools
                     if (findToolType.IsSame(objectToCompare))
                     {
                         objectsWith.Add(go);
+                        Debug.Log(assetPath);
+                        Debug.Log(File.ReadAllText(assetPath));
+                        Debug.Log(File.ReadAllText(AssetDatabase.GetAssetPath(findToolType._objectToSearch)));
                         break;
                     }
                 }
@@ -116,6 +121,57 @@ namespace FindTools
             }
             return assetsWith;
         }
+        public static List<Object> GetPrefabsWith(Object _objectToSearch)
+        {
+            List<Object> objectsWith = new List<Object>();
+            string[] guids = AssetDatabase.FindAssets("", AssetDirectorySelection.FolderPaths);
+            foreach (string guid in guids)
+            {
+
+                string assetPath = AssetDatabase.GUIDToAssetPath(guid);
+                string YAML = File.ReadAllText(assetPath);
+                string objectPath = AssetDatabase.GetAssetPath(_objectToSearch);
+                string metaFile = AssetDatabase.GetTextMetaFilePathFromAssetPath(objectPath);
+                string metaFileText = File.ReadAllText(metaFile);
+
+                Regex regex = new Regex("guid: (.+)");
+                Match match = regex.Match(metaFileText);
+
+                if (match.Success)
+                {
+                    string guidValue = match.Groups[0].Value;
+                    if (YAML.Contains(guidValue))
+                        objectsWith.Add(AssetDatabase.LoadAssetAtPath<GameObject>(assetPath));
+                }
+            }
+            return objectsWith;
+        }
+        public static List<string> GetScenesWith(Object _objectToSearch)
+        {
+            List<string> scenesWith = new List<string>();
+            string[] sceneGuids = AssetDatabase.FindAssets("t:Scene", AssetDirectorySelection.FolderPaths);
+            foreach (string sceneGuid in sceneGuids)
+            {
+                string scenePath = AssetDatabase.GUIDToAssetPath(sceneGuid);
+                if (string.IsNullOrEmpty(scenePath))
+                    continue;
+                if (IsSceneInReadOnlyPackage(scenePath))
+                    continue;
+                string YAML = File.ReadAllText(scenePath);
+                string objectPath = AssetDatabase.GetAssetPath(_objectToSearch);
+                string metaFile = AssetDatabase.GetTextMetaFilePathFromAssetPath(objectPath);
+                string metaFileText = File.ReadAllText(metaFile);
+                Regex regex = new Regex("guid: (.+)");
+                Match match = regex.Match(metaFileText);
+                if (match.Success)
+                {
+                    string guidValue = match.Groups[0].Value;
+                    if (YAML.Contains(guidValue))
+                        scenesWith.Add(scenePath);
+                }
+            }
+            return scenesWith;
+        }
         /// <summary>
         /// Shows an ObjectField for a specified type with a given label.
         /// </summary>
@@ -129,5 +185,12 @@ namespace FindTools
         /// <param name="path">Path of the scene.</param>
         /// <returns>True if the scene is part of a read-only package, false otherwise.</returns>
         private static bool IsSceneInReadOnlyPackage(string path) => UnityEditor.PackageManager.PackageInfo.FindForAssetPath(path) != null;
+
+        public static void ShowWarnig(string warningText)
+        {
+            GUIContent warning = EditorGUIUtility.IconContent("d_console.warnicon.sml");
+            warning.text = warningText;
+            GUILayout.Label(warning, FindToolsUtility.middleSytle);
+        }
     }
 }

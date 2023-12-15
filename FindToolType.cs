@@ -13,7 +13,7 @@ namespace FindTools
         [HideInInspector] public bool avoidPrefabs;
         private List<string> _scenesWith;
         private List<Object> _matchingObjects;
-        protected Object _objectToSearch;
+        public Object _objectToSearch;
         private bool _userFolderRouth;
         protected string[] _folderPaths;
         /// <summary>
@@ -79,9 +79,7 @@ namespace FindTools
                 return;
             if (_matchingObjects.Count == 0)
             {
-                GUIContent warning = EditorGUIUtility.IconContent("d_console.warnicon.sml");
-                warning.text = $"NOT foud {AssetName()} with {GetFindToolName()}";
-                GUILayout.Label(warning, FindToolsUtility.middleSytle);
+                FindToolsUtility.ShowWarnig($"NOT foud {AssetName()} with {GetFindToolName()}");
                 return;
             }
             GUILayout.BeginVertical();
@@ -100,9 +98,7 @@ namespace FindTools
                 return;
             if (_scenesWith.Count == 0)
             {
-                GUIContent warning = EditorGUIUtility.IconContent("d_console.warnicon.sml");
-                warning.text = $"NOT foud Scenes with {GetFindToolName()}";
-                GUILayout.Label(warning, FindToolsUtility.middleSytle);
+                FindToolsUtility.ShowWarnig($"NOT foud Scenes with {GetFindToolName()}");
                 return;
             }
             GUILayout.BeginVertical();
