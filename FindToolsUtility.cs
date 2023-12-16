@@ -121,53 +121,70 @@ namespace FindTools
             }
             return assetsWith;
         }
-        public static List<Object> GetPrefabsWith(Object _objectToSearch)
+        /// <summary>
+        /// Gets a list of assets that contain the specified object based on its GUID.
+        /// </summary>
+        /// <param name="objectToSearch">Object to find.</param>
+        /// <returns>List of assets with the object.</returns>
+        public static List<Object> GetPrefabsWithGUID(Object objectToSearch)
         {
             List<Object> objectsWith = new List<Object>();
+            string objectPath = AssetDatabase.GetAssetPath(objectToSearch);
+            string metaFile = AssetDatabase.GetTextMetaFilePathFromAssetPath(objectPath);
+            string metaFileText = File.ReadAllText(metaFile);
+            Regex guidRegex = new Regex("guid: (.+)");
+            Match guidMatch = guidRegex.Match(metaFileText);
+            if (!guidMatch.Success)
+                return objectsWith;
+            string objectGuid = guidMatch.Groups[1].Value;
             string[] guids = AssetDatabase.FindAssets("", AssetDirectorySelection.FolderPaths);
             foreach (string guid in guids)
             {
-
                 string assetPath = AssetDatabase.GUIDToAssetPath(guid);
-                string YAML = File.ReadAllText(assetPath);
-                string objectPath = AssetDatabase.GetAssetPath(_objectToSearch);
-                string metaFile = AssetDatabase.GetTextMetaFilePathFromAssetPath(objectPath);
-                string metaFileText = File.ReadAllText(metaFile);
-
-                Regex regex = new Regex("guid: (.+)");
-                Match match = regex.Match(metaFileText);
-
-                if (match.Success)
+                try
                 {
-                    string guidValue = match.Groups[0].Value;
-                    if (YAML.Contains(guidValue))
-                        objectsWith.Add(AssetDatabase.LoadAssetAtPath<GameObject>(assetPath));
+                    string yaml = File.ReadAllText(assetPath);
+                    if (yaml.Contains(objectGuid))
+                        objectsWith.Add(AssetDatabase.LoadAssetAtPath<Object>(assetPath));
+                }
+                catch (System.Exception ex)
+                {
+                    Debug.LogError($"Error processing asset with GUID {guid}: {ex.Message}");
                 }
             }
             return objectsWith;
         }
-        public static List<string> GetScenesWith(Object _objectToSearch)
+        /// <summary>
+        /// Gets a list of scenes that contain the specified object based on its GUID.
+        /// </summary>
+        /// <param name="objectToSearch">Object to find.</param>
+        /// <returns>List of scenes with the object.</returns>
+        public static List<string> GetScenesWithGUID(Object objectToSearch)
         {
             List<string> scenesWith = new List<string>();
+            string objectPath = AssetDatabase.GetAssetPath(objectToSearch);
+            string metaFile = AssetDatabase.GetTextMetaFilePathFromAssetPath(objectPath);
+            string metaFileText = File.ReadAllText(metaFile);
+            Regex guidRegex = new Regex("guid: (.+)");
+            Match guidMatch = guidRegex.Match(metaFileText);
+            if (!guidMatch.Success)
+                return scenesWith;
+            string objectGuid = guidMatch.Groups[1].Value;
             string[] sceneGuids = AssetDatabase.FindAssets("t:Scene", AssetDirectorySelection.FolderPaths);
             foreach (string sceneGuid in sceneGuids)
             {
                 string scenePath = AssetDatabase.GUIDToAssetPath(sceneGuid);
-                if (string.IsNullOrEmpty(scenePath))
+                if (string.IsNullOrEmpty(scenePath) || IsSceneInReadOnlyPackage(scenePath))
                     continue;
-                if (IsSceneInReadOnlyPackage(scenePath))
-                    continue;
-                string YAML = File.ReadAllText(scenePath);
-                string objectPath = AssetDatabase.GetAssetPath(_objectToSearch);
-                string metaFile = AssetDatabase.GetTextMetaFilePathFromAssetPath(objectPath);
-                string metaFileText = File.ReadAllText(metaFile);
-                Regex regex = new Regex("guid: (.+)");
-                Match match = regex.Match(metaFileText);
-                if (match.Success)
+                try
                 {
-                    string guidValue = match.Groups[0].Value;
-                    if (YAML.Contains(guidValue))
+                    string yaml = File.ReadAllText(scenePath);
+                    if (yaml.Contains(objectGuid))
                         scenesWith.Add(scenePath);
+                }
+                catch (System.Exception ex)
+                {
+                    Debug.LogError($"Error processing scene with GUID {sceneGuid}: {ex.Message}");
                 }
             }
             return scenesWith;

@@ -25,9 +25,9 @@ namespace FindTools
             _showingScenes = GUILayout.Toggle(_showingScenes, "Include scenes");
             if (GUILayout.Button("Find", FindToolsUtility.styleButton))
             {
-                _matchingObjects = FindToolsUtility.GetPrefabsWith(_objectToSearch);
+                _matchingObjects = FindToolsUtility.GetPrefabsWithGUID(_objectToSearch);
                 if (_showingScenes)
-                    _scenesWith = FindToolsUtility.GetScenesWith(_objectToSearch);
+                    _scenesWith = FindToolsUtility.GetScenesWithGUID(_objectToSearch);
             }
             DisplayObjects();
             if (_showingScenes)
